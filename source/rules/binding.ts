@@ -34,8 +34,8 @@ export type BindingRuleLocalOverrideMap = Map<string, Array<{ name: string, valu
 export const DEFAULT_LOCAL_PROVIDERS: ReadonlyArray<string> = Object.freeze([
   "ref", "view-model.ref", 
   "repeat.for", 
-  "if.bind", "if.to-view", 
-  "with.bind", "with.to-view",
+  // "if.bind", "if.to-view", 
+  // "with.bind", "with.to-view",
 ]);
 
 export const DEFAULT_RESTRICTED_ACCESS: ReadonlyArray<string> = Object.freeze(["private", "protected"]);
@@ -138,11 +138,15 @@ export class BindingRule extends ASTBuilder {
     if (this.localOverride.has(node.tag)) {
       node.locals.push(...this.localOverride.get(node.tag).map(x => new ASTContext(x)));
     }
-
+    
     for (let i = 0, ii = attrs.length; i < ii; ++i) {
       let attr = attrs[i];
       this.examineAttribute(node, attr);
     }
+  }
+  
+  private examineLetElementNode(node: ASTElementNode, locals: ASTElementNode["locals"]) {
+    
   }
 
   private examineTextNode(node: ASTTextNode) {
@@ -237,12 +241,21 @@ export class BindingRule extends ASTBuilder {
       default:
         let attrExp = instruction.attributes[attrName];
         let access = instruction.attributes[attrName].sourceExpression;
+        
+        let resolved: ASTContext;
 
         if (attrExp.constructor.name == "InterpolationBindingExpression")
-          this.examineInterpolationExpression(node, attrExp);
+          resolved = this.examineInterpolationExpression(node, attrExp);
         else {
           let chain = this.flattenAccessChain(access);
-          let resolved = this.resolveAccessScopeToType(node, chain, new FileLoc(attrLoc.line, attrLoc.column));
+          resolved = this.resolveAccessScopeToType(node, chain, new FileLoc(attrLoc.line, attrLoc.column));
+        }
+        
+        if (node.tag === "let") {
+          let type = resolved ? resolved.type : null;
+          let typeDecl = resolved ? resolved.typeDecl : null;
+          //First iteration, naive
+          node.parent.locals.push(new ASTContext({ name: attrExp.targetProperty, type, typeDecl }));
         }
     }
   }
@@ -268,12 +281,14 @@ export class BindingRule extends ASTBuilder {
     let resolved = this.resolveAccessScopeToType(node, chain, node.location);
   }
 
-  private examineInterpolationExpression(node: ASTNode, exp: any) {
+  private examineInterpolationExpression(node: ASTNode, exp: any): ASTContext {
     if (!exp || !node)
       return;
 
     let lineOffset = 0;
     let column = node.location.column;
+    
+    let resolved: ASTContext = null;
 
     exp.parts.forEach(part => {
       if (part.name !== undefined) {
@@ -281,7 +296,7 @@ export class BindingRule extends ASTBuilder {
         let chain = this.flattenAccessChain(part);
 
         if (chain.length > 0)
-          this.resolveAccessScopeToType(node, chain, new FileLoc(node.location.line + lineOffset, column));
+          resolved = this.resolveAccessScopeToType(node, chain, new FileLoc(node.location.line + lineOffset, column));
 
       }
       else if ((<string>part).match !== undefined) {
@@ -293,6 +308,8 @@ export class BindingRule extends ASTBuilder {
         }
       }
     });
+    
+    return resolved;
   }
 
   private resolveRoot(node: ASTNode): ASTNode {

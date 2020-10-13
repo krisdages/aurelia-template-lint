@@ -148,6 +148,62 @@ describe("Static-Type Binding Tests", () => {
     });
   });
 
+  describe("let bindings", () => {
+    let viewmodel = `
+    class Item { name: string }  
+    export class Foo{
+      item: Item;
+    }`;
+
+    it("good let bindings", async () => {
+      let view = `
+<template>
+    <let let-interpolated-item-name="\${item.name}"></let><let let-bound-item.bind="item"></let>
+    <span>\${letInterpolatedItemName} \${letBoundItem.name}</span>        
+</template>`;
+
+      let reflection = new Reflection();
+      let rule = new BindingRule(reflection, new AureliaReflection());
+      let linter = new Linter([rule]);
+      reflection.add("./foo.ts", viewmodel);
+      const issues = await linter.lint(view, './foo.html');
+      expect(issues).toEqual([]);
+    });
+
+    it("rejects bad subproperty of let local", async () => {
+      let view = `
+<template>
+    <let let-bound-item.bind="item"></let>
+    <span>\${letBoundItem.naem}</span>        
+</template>`;
+
+      let reflection = new Reflection();
+      let rule = new BindingRule(reflection, new AureliaReflection());
+      let linter = new Linter([rule]);
+      reflection.add("./foo.ts", viewmodel);
+      const issues = await linter.lint(view, './foo.html');
+      expect(issues.length).toBe(1);
+      expect(issues[0].message).toContain("cannot find 'naem'");
+    });
+
+    it("let locals not scoped outside parent", async () => {
+      let view = `
+<template>
+    <div><let let-interpolated-item-name="\${item.name}"></let><let let-bound-item.bind="item"></let></div>
+    <span>\${letInterpolatedItemName} \${letBoundItem.name}</span>
+</template>`;
+
+      let reflection = new Reflection();
+      let rule = new BindingRule(reflection, new AureliaReflection());
+      let linter = new Linter([rule]);
+      reflection.add("./foo.ts", viewmodel);
+      const issues = await linter.lint(view, './foo.html');
+      expect(issues.length).toBe(2);
+      expect(issues[0].message).toContain("cannot find 'letInterpolatedItemName'");
+      expect(issues[1].message).toContain("cannot find 'letBoundItem'");
+    });
+    
+  });
 
   it("will fail bad interpolation syntax in text node", (done) => {
     var linter: Linter = new Linter([
