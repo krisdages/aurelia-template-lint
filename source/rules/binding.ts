@@ -528,7 +528,7 @@ export class BindingRule extends ASTBuilder {
         if (extend) {
           let extendType = extend.types[0];
 
-          let memberTypeDecl: ts.Declaration = this.reflection.getDeclForType((<ts.SourceFile>currentClass.parent), extendType.getText());
+          let memberTypeDecl: ts.Declaration = this.reflection.getDeclForTypeExpression((<ts.SourceFile>currentClass.parent), extendType);
 
           if (memberTypeDecl != null && memberTypeDecl.kind == ts.SyntaxKind.ClassDeclaration) {
             classDecl = <ts.ClassDeclaration>memberTypeDecl;
@@ -569,7 +569,7 @@ export class BindingRule extends ASTBuilder {
 
     for (let base of classDecl.heritageClauses) {
       for (let type of base.types) {
-        let typeDecl = this.reflection.getDeclForType((<ts.SourceFile>classDecl.parent), type.getText());
+        let typeDecl = this.reflection.getDeclForTypeExpression((<ts.SourceFile>classDecl.parent), type);
 
         if (typeDecl != null) {
           let baseMembers = this.resolveClassMembers(<ts.ClassDeclaration>typeDecl);
@@ -592,7 +592,7 @@ export class BindingRule extends ASTBuilder {
 
     for (let base of interfaceDecl.heritageClauses) {
       for (let type of base.types) {
-        let typeDecl = this.reflection.getDeclForType((<ts.SourceFile>interfaceDecl.parent), type.getText());
+        let typeDecl = this.reflection.getDeclForTypeExpression((<ts.SourceFile>interfaceDecl.parent), type);
 
         if (typeDecl != null) {
           let baseMembers = this.resolveInterfaceMembers(<ts.InterfaceDeclaration>typeDecl);

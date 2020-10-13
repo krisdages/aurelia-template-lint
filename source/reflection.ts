@@ -80,6 +80,11 @@ export class Reflection {
     });
   }
 
+  getDeclForTypeExpression(source: ts.SourceFile, typeExpr: ts.ExpressionWithTypeArguments, isBase: boolean = true): ts.DeclarationStatement {
+    //If type has generic parameters, getFirstToken extracts the type name before the `<`
+    return this.getDeclForType(source, typeExpr.getFirstToken().getText(), isBase);
+  }
+
   getDeclForType(source: ts.SourceFile, typeName: string, isBase: boolean = true): ts.DeclarationStatement {
     if (!source || !typeName) return null;
 
