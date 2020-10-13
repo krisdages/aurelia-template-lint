@@ -37,7 +37,7 @@ export class BindingRule extends ASTBuilder {
 
   public localProvidors = ["ref", "repeat.for", "if.bind", "with.bind"];
   public restrictedAccess = ["private", "protected"];
-  public localOverride?= new Map<string, Array<{ name: string, value: any }>>();
+  public localOverride = new Map<string, Array<{ name: string, value: any }>>();
 
   constructor(
     private reflection: Reflection,
@@ -223,7 +223,7 @@ export class BindingRule extends ASTBuilder {
           let chain = this.flattenAccessChain(access);
           let resolved = this.resolveAccessScopeToType(node, chain, new FileLoc(attrLoc.line, attrLoc.column));
         }
-    };
+    }
   }
 
   private examineListenerExpression(node: ASTElementNode, exp: any /*ListenerExpression*/) {
@@ -363,7 +363,7 @@ export class BindingRule extends ASTBuilder {
 
         if (!resolved)
           resolved = this.resolveStaticType(node, context, name, loc);
-      };
+      }
     }
     else if (access.constructor.name == "AccessKeyed") {
       let keyAccess = access.key;

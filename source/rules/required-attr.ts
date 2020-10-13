@@ -38,4 +38,4 @@ export class RequiredAttributeRule extends Rule {
       }
     });
   }
-};
+}
