@@ -53,7 +53,6 @@
     "test": "gulp test"
   },
   "dependencies": {
-    "@types/node": "^6.0.37",
     "@types/parse5": "0.0.30",
     "aurelia-binding": "^1.0.0",
     "aurelia-dependency-injection": "^1.0.0",
@@ -64,6 +63,6 @@
     "glob": "7.0.x",
     "parse5": "2.2.x",
     "template-lint": "0.8.x",
-    "typescript": "^2.0.0"
+    "typescript": "^4.0.0"
   }
 }

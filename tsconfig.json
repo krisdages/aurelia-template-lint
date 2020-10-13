@@ -5,6 +5,7 @@
     "sourceMap": true,
     "noEmitOnError": true,
     "newLine": "LF",
-    "declaration": true
+    "declaration": true,
+    "skipLibCheck": true
   }
 }
