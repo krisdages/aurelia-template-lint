@@ -514,7 +514,7 @@ export class BindingRule extends ASTBuilder {
       const constr = <ts.ConstructorDeclaration>members.find(ce => ce.kind == ts.SyntaxKind.Constructor);
       if (constr) {
         const param: ts.ParameterDeclaration = constr.parameters.find(parameter => parameter.name.getText() === memberName);
-        if (param && param.flags) {
+        if (param && param.modifiers != null) {
           return [param, param.type];
         }
       }
@@ -677,5 +677,5 @@ export class BindingRule extends ASTBuilder {
 
 function hasModifier(node: ts.ParameterDeclaration | ts.ClassElement | ts.TypeElement, mod: ts.ModifierFlags): 0 | 1 {
   if (node.modifiers === undefined) return 0;
-  return node.modifiers.some(m => (m.flags & mod) === mod) ? 1 : 0;
+  return (ts.getCombinedModifierFlags(node) & mod) === mod ? 1 : 0;
 }
