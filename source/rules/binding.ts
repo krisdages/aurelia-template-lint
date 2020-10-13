@@ -537,7 +537,7 @@ export class BindingRule extends ASTBuilder {
     }
     let memberTypeName = this.reflection.resolveTypeName(memberType);
     let memberTypeDecl: ts.Declaration = this.reflection.getDeclForType((<ts.SourceFile>decl.parent), memberTypeName);
-    let memberIsArray = ('type' in member && member.type.kind == ts.SyntaxKind.ArrayType) || memberType.getText().startsWith("Array");
+    let memberIsArray = ('type' in member && member.type.kind == ts.SyntaxKind.ArrayType || memberType.getText().startsWith("Array<"));
 
     //TODO:
     //let typeArgs = <args:ts.TypeReference[]> member.type.typeArguments;
