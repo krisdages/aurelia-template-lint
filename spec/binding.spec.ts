@@ -376,7 +376,7 @@ describe("Static-Type Binding Tests", () => {
       });
   });
 
-  it("accepts good with.bind attribute value", (done) => {
+  it("accepts good with.bind attribute value", async () => {
     let item = `
     export class Item{
       info:string;
@@ -387,24 +387,24 @@ describe("Static-Type Binding Tests", () => {
     export class Foo{
       item:Item
     }`;
-    let view = `
-    <template with.bind="item"></template>`;
-    let reflection = new Reflection();
-    let rule = new BindingRule(reflection, new AureliaReflection());
-    let linter = new Linter([rule]);
-    reflection.add("./foo.ts", viewmodel);
-    reflection.add("./path/item.ts", item);
-    linter.lint(view, "./foo.html")
-      .then((issues) => {
-        try {
-          expect(issues.length).toBe(0);
-        }
-        catch (error) { expect(error).toBeUndefined(); }
-        finally { done(); }
-      });
+    await Promise.all((["bind", "to-view"] as const).map(dotBind => {
+      let view = `<template with.${dotBind}="item"></template>`;
+      let reflection = new Reflection();
+      let rule = new BindingRule(reflection, new AureliaReflection());
+      let linter = new Linter([rule]);
+      reflection.add("./foo.ts", viewmodel);
+      reflection.add("./path/item.ts", item);
+      return linter.lint(view, "./foo.html")
+        .then((issues) => {
+          try {
+            expect(issues).toEqual([]);
+          }
+          catch (error) { expect(error).toBeUndefined(); }
+        });
+    }));
   });
-
-  it("rejects bad with.bind attribute value", (done) => {
+  
+  it("rejects bad with.bind attribute value", async () => {
     let item = `
     export class Item{
       info:string;
@@ -415,26 +415,25 @@ describe("Static-Type Binding Tests", () => {
     export class Foo{
       item:Item
     }`;
-    let view = `
-    <template with.bind="itm"></template>`;
-    let reflection = new Reflection();
-    let rule = new BindingRule(reflection, new AureliaReflection());
-    let linter = new Linter([rule]);
-    reflection.add("./foo.ts", viewmodel);
-    reflection.add("./path/item.ts", item);
-    linter.lint(view, "./foo.html")
-      .then((issues) => {
-        try {
-          expect(issues.length).toBe(1);
-          expect(issues[0].message).toBe("cannot find 'itm' in type 'Foo'");
-        }
-        catch (error) { expect(error).toBeUndefined(); }
-        finally { done(); }
-      });
+    await Promise.all((["bind", "to-view"] as const).map(dotBind => {
+      let view = `<template with.${dotBind}="itm"></template>`;
+      let reflection = new Reflection();
+      let rule = new BindingRule(reflection, new AureliaReflection());
+      let linter = new Linter([rule]);
+      reflection.add("./foo.ts", viewmodel);
+      reflection.add("./path/item.ts", item);
+      return linter.lint(view, "./foo.html")
+        .then((issues) => {
+          try {
+            expect(issues.length).toBe(1);
+            expect(issues[0].message).toBe("cannot find 'itm' in type 'Foo'");
+          }
+          catch (error) { expect(error).toBeUndefined(); }
+        });
+    }));
   });
-
-
-  it("rejects bad with.bind attribute value", (done) => {
+  
+  it("rejects bad repeat.for attribute value", (done) => {
     let item = `
     export class Item{
       info:string;

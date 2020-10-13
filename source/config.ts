@@ -1,4 +1,6 @@
 import { Rule } from 'template-lint';
+import { BindingRuleLocalOverrideMap, DEFAULT_LOCAL_PROVIDERS, DEFAULT_RESTRICTED_ACCESS } from "./rules/binding";
+import { DEFAULT_TEMPLATE_CONTROLLERS } from "./rules/slot";
 
 export class Config {
 
@@ -86,7 +88,7 @@ export class Config {
   */
   conflictingAttributeOpts: Array<{ attrs: string[], msg?: string }> = [
     {
-      attrs: ["repeat.for", "if.bind", "with.bind"],
+      attrs: [...DEFAULT_TEMPLATE_CONTROLLERS],
       msg: "template controllers shouldn't be placed on the same element"
     }
   ];
@@ -128,18 +130,17 @@ export class Config {
 
   /**
   * Aurelia Binding Access Options
-  * localProvidors: list of attributes that generate local variables
+  * localProviders: list of attributes that generate local variables
   * debugReportExceptions: when true, any caught exceptions are reported as rule issues. 
   * restrictedAccess: access to type members with these modifiers will report an issue;
   */
   aureliaBindingAccessOpts = {
-    localProvidors: [
-      "repeat.for", "if.bind", "with.bind"
-    ],
+    localProviders: [...DEFAULT_LOCAL_PROVIDERS],
     localOverride: new Map([
-      ["my-tag", [{ name: "stubornLocal", typeValue: {} }]]
-    ]),
-    restrictedAccess: ["private", "protected"],
+      // Example entry:
+      //["my-tag", [{ name: "stubbornLocal", value: {} }]]
+    ]) as BindingRuleLocalOverrideMap,
+    restrictedAccess: [...DEFAULT_RESTRICTED_ACCESS],
     reportUnresolvedViewModel: false
   };
 
@@ -149,9 +150,7 @@ export class Config {
   * controllers: attributes that create template controllers
   */
   aureliaSlotOpts = {
-    controllers: [
-      "repeat.for", "if.bind", "with.bind"
-    ]
+    controllers: [...DEFAULT_TEMPLATE_CONTROLLERS]
   };
 
   /**

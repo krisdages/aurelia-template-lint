@@ -27,6 +27,19 @@ import NodeArray = ts.NodeArray;
 import Decorator = ts.Decorator;
 import Identifier = ts.Identifier;
 
+export type BindingRuleLocalOverrideMap = Map<string, Array<{ name: string, value: any }>>;
+
+//TODO: How to handle <let> tags?
+
+export const DEFAULT_LOCAL_PROVIDERS: ReadonlyArray<string> = Object.freeze([
+  "ref", "view-model.ref", 
+  "repeat.for", 
+  "if.bind", "if.to-view", 
+  "with.bind", "with.to-view",
+]);
+
+export const DEFAULT_RESTRICTED_ACCESS: ReadonlyArray<string> = Object.freeze(["private", "protected"]);
+
 /**
  *  Rule to ensure static type usage is valid
  */
@@ -35,9 +48,9 @@ export class BindingRule extends ASTBuilder {
   public reportExceptions = false;
   public reportUnresolvedViewModel = false;
 
-  public localProvidors = ["ref", "repeat.for", "if.bind", "with.bind"];
-  public restrictedAccess = ["private", "protected"];
-  public localOverride = new Map<string, Array<{ name: string, value: any }>>();
+  public localProviders: string[];
+  public restrictedAccess: string[];
+  public localOverride: BindingRuleLocalOverrideMap;
 
   constructor(
     private reflection: Reflection,
@@ -47,8 +60,8 @@ export class BindingRule extends ASTBuilder {
       reportBindingAccess?: boolean,
       reportUnresolvedViewModel?: boolean,
       reportExceptions?: boolean,
-      localProvidors?: string[],
-      localOverride?: Map<string, Array<{ name: string, typeValue: any }>>
+      localProviders?: string[],
+      localOverride?: BindingRuleLocalOverrideMap,
       restrictedAccess?: string[]
     }) {
 
@@ -56,6 +69,14 @@ export class BindingRule extends ASTBuilder {
 
     if (opt)
       Object.assign(this, opt);
+    
+    if (this.localOverride == null)
+      this.localOverride = new Map();
+    if (this.localProviders == null)
+      this.localProviders = [...DEFAULT_LOCAL_PROVIDERS];
+    if (this.restrictedAccess == null)
+      this.restrictedAccess = [...DEFAULT_RESTRICTED_ACCESS];
+    
   }
 
   init(parser: Parser, path?: string) {
@@ -99,8 +120,8 @@ export class BindingRule extends ASTBuilder {
 
   private examineElementNode(node: ASTElementNode) {
     let attrs = node.attrs.sort((a, b) => {
-      var ai = this.localProvidors.indexOf(a.name);
-      var bi = this.localProvidors.indexOf(b.name);
+      var ai = this.localProviders.indexOf(a.name);
+      var bi = this.localProviders.indexOf(b.name);
 
       if (ai == -1 && bi == -1)
         return 0;
@@ -322,7 +343,8 @@ export class BindingRule extends ASTBuilder {
       return null;
     }
 
-    let first = classes[0];
+    let first = classes.find(c => c.name.escapedText === viewName);
+    if (first == null) { first = classes[0]; }
     let context = new ASTContext();
 
     context.name = first.name.getText();

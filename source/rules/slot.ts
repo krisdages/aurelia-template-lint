@@ -4,6 +4,8 @@
 import { Rule, Parser, Issue, IssueSeverity } from 'template-lint';
 import { Attribute, StartTagLocationInfo } from 'parse5';
 
+export const DEFAULT_TEMPLATE_CONTROLLERS: ReadonlyArray<string> = Object.freeze(["repeat.for", "if.bind", "with.bind", "if.to-view", "with.to-view", "if.one-time", "with.one-time"]);
+
 /**
  *  Rule to ensure root element is the template element
  */
@@ -14,7 +16,7 @@ export class SlotRule extends Rule {
   constructor(controllers?: string[]) {
     super();
     this.slots = new Array<{ name: string, loc: StartTagLocationInfo }>();
-    this.controllers = controllers || ["repeat.for", "if.bind", "with.bind"];
+    this.controllers = controllers || [...DEFAULT_TEMPLATE_CONTROLLERS];
   }
 
   init(parser: Parser) {
