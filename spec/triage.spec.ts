@@ -1,9 +1,7 @@
-
-import { Linter, Rule } from 'template-lint';
+import { IssueSeverity, Linter } from 'template-lint';
 import { BindingRule } from '../source/rules/binding';
 import { Reflection } from '../source/reflection';
 import { AureliaReflection } from '../source/aurelia-reflection';
-import { ASTNode } from '../source/ast';
 
 /* Triage - Make sure stuff doesn't blow-up for the time-being. */
 describe("Triage", () => {
@@ -155,6 +153,38 @@ describe("Triage", () => {
     linter.lint(view, "./path/foo.html")
       .then((issues) => {
         expect(issues.length).toBe(0);
+        done();
+      });
+  });
+  
+  it("with reportTypeAliasUnsupported specified, it will log an issue if binding to a type alias", (done) => {
+    let types = `
+    class A{
+      name: string;
+    }
+    class B{
+      name: string;
+      value: number;
+    }
+    export type C = A & B`;
+    let viewmodel = `   
+    import {C} from './types' 
+    export class Foo {
+        value:C;
+    }`;
+    let view = `
+    <template>
+      \${value.not.checked}
+    </template>`;
+    let reflection = new Reflection();
+    let rule = new BindingRule(reflection, new AureliaReflection(), { reportTypeAliasUnsupported: IssueSeverity.Warning });
+    let linter = new Linter([rule]);
+    reflection.add("./path/foo.ts", viewmodel);
+    reflection.add("./path/types.ts", types);
+    linter.lint(view, "./path/foo.html")
+      .then((issues) => {
+        expect(issues.length).toBe(1);
+        expect(issues[0].message).toBe("Type 'C' is a type alias, which is not yet supported.");
         done();
       });
   });

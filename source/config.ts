@@ -1,4 +1,4 @@
-import { Rule } from 'template-lint';
+import { Issue, IssueSeverity, Rule } from 'template-lint';
 import { BindingRuleLocalOverrideMap, DEFAULT_LOCAL_PROVIDERS, DEFAULT_RESTRICTED_ACCESS } from "./rules/binding";
 import { DEFAULT_TEMPLATE_CONTROLLERS } from "./rules/slot";
 
@@ -141,7 +141,8 @@ export class Config {
       //["my-tag", [{ name: "stubbornLocal", value: {} }]]
     ]) as BindingRuleLocalOverrideMap,
     restrictedAccess: [...DEFAULT_RESTRICTED_ACCESS],
-    reportUnresolvedViewModel: false
+    reportUnresolvedViewModel: false,
+    reportTypeAliasUnsupported: false as false | IssueSeverity,
   };
 
 

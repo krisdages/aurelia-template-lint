@@ -91,7 +91,9 @@ export class Reflection {
     if (source.kind == ts.SyntaxKind.SourceFile) {
       let types = source.statements.filter(x =>
         x.kind == ts.SyntaxKind.ClassDeclaration ||
-        x.kind == ts.SyntaxKind.InterfaceDeclaration);
+        x.kind == ts.SyntaxKind.InterfaceDeclaration ||
+        x.kind == ts.SyntaxKind.TypeAliasDeclaration
+      );
 
       let result: ts.DeclarationStatement = null;
 
@@ -116,7 +118,9 @@ export class Reflection {
 
         let classes = moduleBlock.statements.filter(x =>
           x.kind == ts.SyntaxKind.ClassDeclaration ||
-          x.kind == ts.SyntaxKind.InterfaceDeclaration);
+          x.kind == ts.SyntaxKind.InterfaceDeclaration ||
+          x.kind == ts.SyntaxKind.TypeAliasDeclaration
+        );
 
         return <ts.DeclarationStatement>classes.find(x => (<ts.DeclarationStatement>x).name.getText() === typeName);
       }

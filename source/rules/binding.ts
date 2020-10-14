@@ -1,31 +1,21 @@
 "use strict";
 
 import "aurelia-polyfills";
-
-import { TemplatingBindingLanguage, InterpolationBindingExpression } from "aurelia-templating-binding";
-import { ViewResources, BindingLanguage, BehaviorInstruction } from "aurelia-templating";
-import { AccessMember, AccessScope, AccessKeyed, Expression, NameExpression, ValueConverter, ListenerExpression } from "aurelia-binding";
-import { Container } from "aurelia-dependency-injection";
+import { BehaviorInstruction } from "aurelia-templating";
+import { ListenerExpression, NameExpression } from "aurelia-binding";
 import * as ts from "typescript";
 import * as Path from "path";
 
-import { Rule, Parser, ParserState, Issue, IssueSeverity } from "template-lint";
+import { Issue, IssueSeverity, Parser } from "template-lint";
 import { Reflection } from "../reflection";
 import { AureliaReflection } from '../aurelia-reflection';
 
-import {
-  ASTBuilder,
-  ASTElementNode,
-  ASTTextNode,
-  ASTNode,
-  ASTAttribute,
-  ASTContext,
-  FileLoc
-} from "../ast";
+import { ASTAttribute, ASTBuilder, ASTContext, ASTElementNode, ASTNode, ASTTextNode, FileLoc } from "../ast";
 import Node = ts.Node;
 import NodeArray = ts.NodeArray;
 import Decorator = ts.Decorator;
 import Identifier = ts.Identifier;
+import { TypeAliasDeclaration } from "typescript";
 
 export type BindingRuleLocalOverrideMap = Map<string, Array<{ name: string, value: any }>>;
 
@@ -47,6 +37,7 @@ export class BindingRule extends ASTBuilder {
   public reportBindingAccess = true;
   public reportExceptions = false;
   public reportUnresolvedViewModel = false;
+  public reportTypeAliasUnsupported: IssueSeverity | false;
 
   public localProviders: string[];
   public restrictedAccess: string[];
@@ -59,6 +50,7 @@ export class BindingRule extends ASTBuilder {
       reportBindingSyntax?: boolean,
       reportBindingAccess?: boolean,
       reportUnresolvedViewModel?: boolean,
+      reportTypeAliasUnsupported?: IssueSeverity | false,
       reportExceptions?: boolean,
       localProviders?: string[],
       localOverride?: BindingRuleLocalOverrideMap,
@@ -76,7 +68,8 @@ export class BindingRule extends ASTBuilder {
       this.localProviders = [...DEFAULT_LOCAL_PROVIDERS];
     if (this.restrictedAccess == null)
       this.restrictedAccess = [...DEFAULT_RESTRICTED_ACCESS];
-    
+    if (this.reportTypeAliasUnsupported == null)
+      this.reportTypeAliasUnsupported = false;
   }
 
   init(parser: Parser, path?: string) {
@@ -460,6 +453,13 @@ export class BindingRule extends ASTBuilder {
     let memberType: ts.TypeNode;
     let member: ts.ParameterDeclaration | ts.ClassElement | ts.TypeElement = null;
 
+    if (decl.kind === ts.SyntaxKind.TypeAliasDeclaration) {
+      if (this.reportTypeAliasUnsupported !== false) {
+        this.reportTypeAliasUnsupportedIssue(decl as ts.TypeAliasDeclaration, loc, this.reportTypeAliasUnsupported);
+      }
+      return null;
+    }
+
     switch (decl.kind) {
       case ts.SyntaxKind.ClassDeclaration: {
         const classDecl = <ts.ClassDeclaration>decl;
@@ -482,7 +482,8 @@ export class BindingRule extends ASTBuilder {
           }
           */
           memberType = this.reflection.resolveClassElementType(member);
-        } else {
+        }
+        else {
           [member, memberType] = this.findMemberInCtorDecls(classDecl, memberName);
         }
         if (!member) {
@@ -491,7 +492,8 @@ export class BindingRule extends ASTBuilder {
         }
         if (!member)
           break;
-      } break;
+      }
+        break;
       case ts.SyntaxKind.InterfaceDeclaration: {
         let members = this.resolveInterfaceMembers(<ts.InterfaceDeclaration>decl);
 
@@ -509,11 +511,10 @@ export class BindingRule extends ASTBuilder {
           break;
 
         memberType = this.reflection.resolveTypeElementType(member);
-      } break;
+      }
       default:
-      //console.log("Unhandled Kind");
+        //console.log("Unhandled Kind");
     }
-
     if (!member) {
       this.reportUnresolvedAccessMemberIssue(memberName, decl, loc);
       return null;
@@ -707,6 +708,18 @@ export class BindingRule extends ASTBuilder {
       line: loc.line,
       column: loc.column,
       severity: IssueSeverity.Warning
+    });
+
+    this.reportIssue(issue);
+  }
+  
+  private reportTypeAliasUnsupportedIssue(decl: ts.NamedDeclaration, loc: FileLoc, severity: IssueSeverity) {
+    let msg = `Type '${decl.name.getText()}' is a type alias, which is not yet supported.`;
+    let issue = new Issue({
+      message: msg,
+      line: loc.line,
+      column: loc.column,
+      severity
     });
 
     this.reportIssue(issue);
